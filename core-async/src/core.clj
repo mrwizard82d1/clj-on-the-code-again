@@ -44,3 +44,7 @@
   (thread
     (take! c (fn [value]
                (println (str "taken='" value "'"))))))
+
+;; This code works; however, creating `thread`s is relatively expensive.
+;; Creating `go` routines is **much cheaper** because a `go` routine
+;; **does not** create a **system thread**.
