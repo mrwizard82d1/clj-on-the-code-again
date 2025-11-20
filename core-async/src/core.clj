@@ -13,7 +13,7 @@
 
 ;; Push values onto a channel from one thread and pull values off
 ;; on another.
-(let [c (chan)]
+(let [c (chan 5)]
   ;; Better usage. Use `thread` from `core.async`. This action
   ;; creates a `channel` (with the thread hidden) which then
   ;; allows one to perform asynchronous operations like `put!!`
@@ -22,7 +22,11 @@
       ;; Put (with blocking) the value, `x` onto our channel, `c`
       ;; "The first `!` says, 'This is a side-effect.' The second
       ;; `!` says that this is blocking."
-      (>!! c x)))
+      (>!! c x)
+      ;; Having no consumer (commented out belowe) actually puts
+      ;; **no** values on the channel. (Seems strange but I'm pretty
+      ;; confident that some rationale exists.)
+      (println "Put value " x " on channel")))
   ;; Better usage. Use `thread` from `core.async`. This action
   ;; creates a `channel` (with the thread hidden) which then
   ;; allows one to perform asynchronous operations like `take!!`
