@@ -14,23 +14,26 @@
 ;; Push values onto a channel from one thread and pull values off
 ;; on another.
 (let [c (chan 2)]
-  ;; Better usage. Use `thread` from `core.async`. This action
-  ;; creates a `channel` (with the thread hidden) which then
-  ;; allows one to perform asynchronous operations like `put!!`
   (thread
     (doseq [x (range 1 5)]
-      ;; Put (with blocking) the value, `x` onto our channel, `c`
-      ;; "The first `!` says, 'This is a side-effect.' The second
-      ;; `!` says that this is blocking."
+      ;; The producer want to put four items on the queue; however, the
+      ;; size of the queue is **two** so it blocks any and all producters
+      ;; once it is full.
       (>!! c x)
-      ;; Having no consumer (commented out belowe) actually puts
-      ;; **no** values on the channel. (Seems strange but I'm pretty
-      ;; confident that some rationale exists.)
       (println "Put value " x " on channel")))
-  ;; Better usage. Use `thread` from `core.async`. This action
-  ;; creates a `channel` (with the thread hidden) which then
-  ;; allows one to perform asynchronous operations like `take!!`
-  #_(thread
-    (doseq [x (range 1 5)]
-      ;; Take (with blocking) the next value from our channel, `c`
+  (thread
+    (doseq [x (range 1 3)]
+      ;; This consumer takes **two** items off the queue and then stops.
       (println "from chan" (<!! c)))))
+
+;; As a consequence, the output, although intermingled between producer
+;; and consumer, demonstrates both producer and consumer working. The
+;; producer puts, at most, **two** items on the queue before it waits
+;; for the consumer to "free" space by consuming items. Once the
+;; consumer has consumed the first two items put onto the queue by
+;; the producer, the consumer thread exits because it is finished.
+;; Additionally, the consumer is now free to put up to two additional
+;; items onto the queue.
+;;
+;; Notice that, at least on my M1 Mac, I see the ouptut from the
+;; consumer and producer intermingled in an unpredictable way.
