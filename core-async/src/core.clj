@@ -1,6 +1,6 @@
 (ns core
   (:require [clojure.core.async :as a :refer [chan >!! <!! thread
-                                              put! take!]]))
+                                              put! take! go >! <!]]))
 
 ;; Be sure to evaluate all these forms in the `core` namespace
 
@@ -48,3 +48,30 @@
 ;; This code works; however, creating `thread`s is relatively expensive.
 ;; Creating `go` routines is **much cheaper** because a `go` routine
 ;; **does not** create a **system thread**.
+
+;; Push values onto a channel and pull values off using `go`.
+;;
+;; Note that the output is again **mixed up**. On my M1 Mac, I see
+;;
+;; > from chan 1
+;; > Put value 1 on channel
+;; > Put value 2 on channel
+;; > from chan 2
+;;
+(let [c (chan)]
+  (go
+    (doseq [x (range 1 5)]
+      ;; The producer want to put four items on the queue; however, the
+      ;; size of the queue is **two** so it blocks any and all producters
+      ;; once it is full.
+      (>! c x)
+      (println "Put value " x " on channel")))
+  (go
+    ;; Introducing a call to `Thread/sleep` avoids intermingling of
+    ;; producer and consumer output. Consequently, the result more
+    ;; clearly demonstrates the producer waiting for the consumer to
+    ;; remove items.
+    (Thread/sleep 1000)
+    (doseq [x (range 1 3)]
+      ;; This consumer takes **two** items off the queue and then stops.
+      (println "from chan" (<! c)))))
