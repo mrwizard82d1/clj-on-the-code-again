@@ -26,7 +26,7 @@
   ;; Better usage. Use `thread` from `core.async`. This action
   ;; creates a `channel` (with the thread hidden) which then
   ;; allows one to perform asynchronous operations like `take!!`
-  (thread
+  #_(thread
     (doseq [x (range 1 5)]
       ;; Take (with blocking) the next value from our channel, `c`
       (println "from chan" (<!! c)))))
