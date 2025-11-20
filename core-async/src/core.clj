@@ -1,5 +1,6 @@
 (ns core
-  (:require [clojure.core.async :as a :refer [chan >!! <!! thread]]))
+  (:require [clojure.core.async :as a :refer [chan >!! <!! thread
+                                              put! take!]]))
 
 ;; Be sure to evaluate all these forms in the `core` namespace
 
@@ -31,14 +32,15 @@
       ;; This consumer takes **two** items off the queue and then stops.
       (println "from chan" (<!! c)))))
 
-;; As a consequence, the output, although intermingled between producer
-;; and consumer, demonstrates both producer and consumer working. The
-;; producer puts, at most, **two** items on the queue before it waits
-;; for the consumer to "free" space by consuming items. Once the
-;; consumer has consumed the first two items put onto the queue by
-;; the producer, the consumer thread exits because it is finished.
-;; Additionally, the consumer is now free to put up to two additional
-;; items onto the queue.
-;;
-;; Notice that, at least on my M1 Mac, I see the ouptut from the
-;; consumer and producer intermingled in an unpredictable way.
+;; Demonstrate `put!` on a channel and `take!` from a channel
+
+(let [c (chan)]
+  (thread
+    (put! c
+          "On the code again"
+          (fn [sent?]
+            ;; Optional callback that indicates a value was sent.
+            (println "has been sent?" sent?))))
+  (thread
+    (take! c (fn [value]
+               (println (str "taken='" value "'"))))))
