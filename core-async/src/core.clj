@@ -13,7 +13,7 @@
 
 ;; Push values onto a channel from one thread and pull values off
 ;; on another.
-(let [c (chan 5)]
+(let [c (chan 2)]
   ;; Better usage. Use `thread` from `core.async`. This action
   ;; creates a `channel` (with the thread hidden) which then
   ;; allows one to perform asynchronous operations like `put!!`
