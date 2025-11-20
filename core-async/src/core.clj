@@ -22,6 +22,11 @@
       (>!! c x)
       (println "Put value " x " on channel")))
   (thread
+    ;; Introducing a call to `Thread/sleep` avoids intermingling of
+    ;; producer and consumer output. Consequently, the result more
+    ;; clearly demonstrates the producer waiting for the consumer to
+    ;; remove items.
+    (Thread/sleep 1000)
     (doseq [x (range 1 3)]
       ;; This consumer takes **two** items off the queue and then stops.
       (println "from chan" (<!! c)))))
