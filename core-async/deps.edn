@@ -1,2 +1,4 @@
 {:paths ["src"]
- :deps {org.clojure/core.async {:mvn/version "1.8.741"}}}
+ :deps {org.clojure/core.async {:mvn/version "1.8.741"}
+        hato/hato {:mvn/version "1.0.0"}
+        org.clojure/data.json {:mvn/version "2.5.1"}}}
