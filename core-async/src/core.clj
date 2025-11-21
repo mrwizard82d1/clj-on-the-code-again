@@ -80,6 +80,7 @@
 
 ;; Get a "test / phony" user
 (defn fetch-user [user-id]
+  (Thread/sleep 2000)
   (-> (str "https://reqres.in/api/users/" user-id)
       hc/get
       :body
@@ -91,7 +92,6 @@
 ;; (Fake) Email a user
 (defn email-user [email]
   ;; Simulate reading from the network
-  (Thread/sleep 1000)
   (println "Email sent to" email))
 
 (email-user "test@test.com")
