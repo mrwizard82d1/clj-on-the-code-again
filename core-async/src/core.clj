@@ -1,6 +1,8 @@
 (ns core
   (:require [clojure.core.async :as a :refer [chan >!! <!! thread
-                                              put! take! go >! <!]]))
+                                              put! take! go >! <!]]
+            [hato.client :as hc]
+            [clojure.data.json :as json]))
 
 ;; Be sure to evaluate all these forms in the `core` namespace
 
@@ -75,3 +77,34 @@
     (doseq [x (range 1 3)]
       ;; This consumer takes **two** items off the queue and then stops.
       (println "from chan" (<! c)))))
+
+;; Get a "test / phony" user
+(defn fetch-user [user-id]
+  (-> (str "https://reqres.in/api/users/" user-id)
+      hc/get
+      :body
+      json/read-json
+      :data))
+
+(fetch-user 2)
+
+;; (Fake) Email a user
+(defn email-user [email]
+  ;; Simulate reading from the network
+  (Thread/sleep 2000)
+  (println "Email sent to" email))
+
+(email-user "test@test.com")
+
+(defn process-users []
+  (let [c (chan)]
+    (thread
+      (doseq [x (range 1 5)]
+        (>!! c (fetch-user x))))
+    (thread
+      (loop []
+        (when-some [user (<!! c)]
+          (email-user (:email user)))
+        (recur)))))
+
+(process-users)
