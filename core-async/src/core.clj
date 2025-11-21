@@ -1,6 +1,7 @@
 (ns core
   (:require [clojure.core.async :as a :refer [chan >!! <!! thread
-                                              put! take! go >! <!]]
+                                              put! take! go >! <!
+                                              go-loop close!]]
             [hato.client :as hc]
             [clojure.data.json :as json]))
 
@@ -43,9 +44,8 @@
           (fn [sent?]
             ;; Optional callback that indicates a value was sent.
             (println "has been sent?" sent?))))
-  (thread
-    (take! c (fn [value]
-               (println (str "taken='" value "'"))))))
+  (thread (take! c (fn [value]
+                     (println (str "taken='" value "'"))))))
 
 ;; This code works; however, creating `thread`s is relatively expensive.
 ;; Creating `go` routines is **much cheaper** because a `go` routine
@@ -86,7 +86,7 @@
       json/read-json
       :data))
 
-(fetch-user 3)
+(fetch-user 2)
 
 ;; (Fake) Email a user
 (defn email-user [email]
@@ -100,11 +100,13 @@
 ;; has changed with the reqres API. I've noticed that it no longer
 ;; recognizes a user with an id of 1. And, attempting to fetch a user
 ;; with an id of `3` also generates an exception because of a 401
-;; status code.
+;; status code. Ironically, the code sometimes seemed to work
+;; "as advertized". I think I'm getting some "state" lying around;
+;; however, I do not plan to address it at this time.
 (defn process-users []
   (let [c (chan)]
     (thread
-      (doseq [x (range 2 3)]
+      (doseq [x (range 1 5)]
         (>!! c (fetch-user x))))
     (thread
       (loop []
@@ -114,15 +116,16 @@
 
 (process-users)
 
+(def users-channel (chan))
+
 (defn process-users-go []
-  (let [c (chan)]
-    (go
-      (doseq [x (range 2 3)]
-        (>! c (fetch-user x))))
-    (go
-      (loop []
-        (when-some [user (<! c)]
-          (email-user (:email user)))
-        (recur)))))
+  (go
+    (doseq [x (range 1 5)]
+      (>! users-channel (fetch-user x))))
+  (go-loop []
+    (when-some [user (<! users-channel)]
+      (email-user (:email user))
+      (recur))))
 
 (process-users-go)
+(close! users-channel)
