@@ -86,20 +86,25 @@
       json/read-json
       :data))
 
-(fetch-user 2)
+(fetch-user 3)
 
 ;; (Fake) Email a user
 (defn email-user [email]
   ;; Simulate reading from the network
-  (Thread/sleep 2000)
+  (Thread/sleep 1000)
   (println "Email sent to" email))
 
 (email-user "test@test.com")
 
+;; This function does not quite work as in the video. I suspect something
+;; has changed with the reqres API. I've noticed that it no longer
+;; recognizes a user with an id of 1. And, attempting to fetch a user
+;; with an id of `3` also generates an exception because of a 401
+;; status code.
 (defn process-users []
   (let [c (chan)]
     (thread
-      (doseq [x (range 1 5)]
+      (doseq [x (range 2 3)]
         (>!! c (fetch-user x))))
     (thread
       (loop []
@@ -108,3 +113,16 @@
         (recur)))))
 
 (process-users)
+
+(defn process-users-go []
+  (let [c (chan)]
+    (go
+      (doseq [x (range 2 3)]
+        (>! c (fetch-user x))))
+    (go
+      (loop []
+        (when-some [user (<! c)]
+          (email-user (:email user)))
+        (recur)))))
+
+(process-users-go)
